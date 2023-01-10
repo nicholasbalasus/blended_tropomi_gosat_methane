@@ -1,0 +1,18 @@
+# Readme about the script
+# Lei Zhu, 10/27/16
+# Updated in several iterations JDM 
+
+# About the folder
+RegridPixels.f90		: Main script
+cakecut_m.f90 and tools_m.f90 	: Two modules called by RegridPixels.f90
+run.sh                          : runscript
+
+# Compile for SRON machines:
+gfortran -o RegridPixels.x cakecut_m.f90 tools_m.f90 RegridPixels.f90
+
+# Compile with errors for SRON machines:
+gfortran -g -fbacktrace -Wall -fcheck=all -o RegridPixels.x cakecut_m.f90 tools_m.f90 RegridPixels.f90
+
+# Run:
+./run.sh
+
