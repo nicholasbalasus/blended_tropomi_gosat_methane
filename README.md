@@ -22,5 +22,5 @@ The project is broken into modules for downloading data, processing data, and wr
 * Module 3: Write data
     * **Write_NetCDF**: write netCDF files that mimic the original TROPOMI data but add a variable for the blended product (~5 minutes, 512 cores, 1536 GB).
     * **Paired_Regrid**: regrid the TROPOMI and GOSAT pairs to a standard grid (~180 minute, 1 core, 128 GB).
-    * **TROPOMI_Regrid**: regrid the TROPOMI data to a standard grid (~750 minutes, 1 core, 200 GB).
+    * **TROPOMI_Regrid**: regrid the TROPOMI data to a standard grid (~1100 minutes, 1 core, 200 GB).
     * **Oversample_TROPOMI**: for specific regions, oversample TROPOMI data to 0.01 degrees (~560 minutes, 6 cores, 1800 GB). 
