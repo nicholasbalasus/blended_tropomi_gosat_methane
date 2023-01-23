@@ -364,11 +364,11 @@ PROGRAM RegridPixels
             ! pixel size (A) and inversely proportional to the error standard deviation (VCD_Unc(p)).
             ! If you just want fraction of overlap area as averaging weight, use: temp_area/A
             ! If you just want area weighted average, use: temp_area
-            ! Don't weight by VCD_Unc for now (JDM)
-            !Sum_Above(row,col) = Sum_Above(row,col) + temp_area/A/VCD_Unc(p)*VCD(p)
-            !Sum_Below(row,col) = Sum_Below(row,col) + temp_area/A/VCD_Unc(p)
-            Sum_Above(row,col) = Sum_Above(row,col) + temp_area/A*VCD(p)
-            Sum_Below(row,col) = Sum_Below(row,col) + temp_area/A
+            ! Use VCD_Unc (NB)
+            Sum_Above(row,col) = Sum_Above(row,col) + temp_area/A/VCD_Unc(p)*VCD(p)
+            Sum_Below(row,col) = Sum_Below(row,col) + temp_area/A/VCD_Unc(p)
+            ! Sum_Above(row,col) = Sum_Above(row,col) + temp_area/A*VCD(p)
+            ! Sum_Below(row,col) = Sum_Below(row,col) + temp_area/A
             Pixels_count(row,col) = Pixels_count(row,col) + 1
           ENDDO
         ENDDO
