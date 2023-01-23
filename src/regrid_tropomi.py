@@ -28,12 +28,12 @@ def regrid(filename,start_orbit,end_orbit,lon_lower,lon_upper,lon_res,lat_lower,
         lon_res [float] : longitude resolution of final regridded
         lat_lower [float] : latitude of lower bound of regridded area
         lat_upper [float] : latitude of upper bound of regridded area
-        lat_rest [float] : latitude resolution of final regridded
+        lat_res [float] : latitude resolution of final regridded
 
     Returns
         none [none] : nothing explicity returned but a geojson file is saved to regridded_dir
     '''
-    
+
      # Do not run if file already exists
     if os.path.exists(regridded_dir+filename):
         return
@@ -53,8 +53,13 @@ def regrid(filename,start_orbit,end_orbit,lon_lower,lon_upper,lon_res,lat_lower,
                 if len(df1) != 0:
                     df2 = pd.read_pickle(blended_tropomi_gosat_dir+file) # corrected with ML
                     assert len(df1) == len(df2)
-                    df = pd.concat([df1[["latitude","longitude","xch4_corrected","swir_surface_albedo","nir_surface_albedo","aerosol_size"]],df2], axis=1) # add the corrected data
+                    df = pd.concat([df1[["latitude","longitude","xch4_corrected","swir_surface_albedo","nir_surface_albedo","aerosol_size","landflag"]],df2], axis=1) # add the corrected data
                     df = df[(df["latitude"] >= lat_lower) & (df["latitude"] <= lat_upper) & (df["longitude"] >= lon_lower) & (df["longitude"] <= lon_upper)].reset_index(drop=True)
+
+                    if "Water" in filename:
+                        df = df[(df["landflag"] == 1) | (df["landflag"] == 3)].reset_index(drop=True)
+                    elif "Land" in filename:
+                        df = df[(df["landflag"] == 0) | (df["landflag"] == 2)].reset_index(drop=True)
 
                     # This is to avoid pd.concat chaning the dtype to object
                     if len(df) != 0:
@@ -71,8 +76,13 @@ def regrid(filename,start_orbit,end_orbit,lon_lower,lon_upper,lon_res,lat_lower,
                 if len(df1) != 0:
                     df2 = pd.read_pickle(blended_tropomi_gosat_dir+file) # corrected with ML
                     assert len(df1) == len(df2)
-                    df = pd.concat([df1[["latitude","longitude","xch4_corrected","swir_surface_albedo","nir_surface_albedo","aerosol_size"]],df2], axis=1) # add the corrected data
+                    df = pd.concat([df1[["latitude","longitude","xch4_corrected","swir_surface_albedo","nir_surface_albedo","aerosol_size","landflag"]],df2], axis=1) # add the corrected data
                     df = df[(df["latitude"] >= lat_lower) & (df["latitude"] <= lat_upper) & (df["longitude"] >= lon_lower) & (df["longitude"] <= lon_upper)].reset_index(drop=True)
+
+                    if "Water" in filename:
+                        df = df[(df["landflag"] == 1) | (df["landflag"] == 3)].reset_index(drop=True)
+                    elif "Land" in filename:
+                        df = df[(df["landflag"] == 0) | (df["landflag"] == 2)].reset_index(drop=True)
 
                     # This is to avoid pd.concat chaning the dtype to object
                     if len(df) != 0:
@@ -116,8 +126,9 @@ def regrid(filename,start_orbit,end_orbit,lon_lower,lon_upper,lon_res,lat_lower,
     
 if __name__ == "__main__":
     regrid("TROPOMI_Global_2021_1deg.geojson",16679,21856,-180,180,1,-90,90,1)
+    regrid("TROPOMI_Land_2021_1deg.geojson",16679,21856,-180,180,1,-90,90,1)
+    regrid("TROPOMI_Water_2021_1deg.geojson",16679,21856,-180,180,1,-90,90,1)
     regrid("TROPOMI_Global_Jan_Mar_2021_1deg.geojson",16679,17956,-180,180,1,-90,90,1)
     regrid("TROPOMI_Global_Apr_Jun_2021_1deg.geojson",17957,19247,-180,180,1,-90,90,1)
     regrid("TROPOMI_Global_Jul_Sep_2021_1deg.geojson",19248,20551,-180,180,1,-90,90,1)
     regrid("TROPOMI_Global_Oct_Dec_2021_1deg.geojson",20552,21856,-180,180,1,-90,90,1)
-    regrid("TROPOMI_AP_2021_01deg.geojson",16679,21856,40,50,0.1,24,33,0.1)
