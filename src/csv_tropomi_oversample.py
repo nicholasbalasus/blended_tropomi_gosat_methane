@@ -109,13 +109,14 @@ def csv_oversample(args):
     
 if __name__ == "__main__":
     
-    args = [["TROPOMI_NorthAfrica_2021",16679,21856,-20,65,0,40],\
-            ["TROPOMI_NorthAfrica_No_Coastal_2021",16679,21856,-20,65,0,40],\
+    args = [["TROPOMI_NorthAfrica_2018",1130,6307,-20,65,0,40],\
+            ["TROPOMI_NorthAfrica_2019",6308,11486,-20,65,0,40],\
+            ["TROPOMI_NorthAfrica_2020",11487,16678,-20,65,0,40],\
+            ["TROPOMI_NorthAfrica_2021",16679,21856,-20,65,0,40],\
             ["TROPOMI_NorthAfrica_No_Mixed_2021",16679,21856,-20,65,0,40],\
             ["TROPOMI_NorthAmerica_2021",16679,21856,-135,-60,15,60],\
-            ["TROPOMI_NorthAmerica_No_Coastal_2021",16679,21856,-135,-60,15,60],\
             ["TROPOMI_NorthAmerica_No_Mixed_2021",16679,21856,-135,-60,15,60]]
     
-    pool = multiprocessing.Pool(6)
+    pool = multiprocessing.Pool(7)
     pool.map(csv_oversample, args)
     pool.close()
