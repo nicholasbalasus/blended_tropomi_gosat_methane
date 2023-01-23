@@ -408,7 +408,7 @@ if "$Oversample_TROPOMI"; then
     start_time=$(date +%s)
 
     # write csv files of the TROPOMI data for the requested regions, time frames, and variables (all specified in csv_tropomi_oversample.py)
-    sbatch -W --export=NONE -J mod_3Da -p $Partition -t 2-00:00 --mem 1800000 -c 6 --wrap "source ~/.bashrc; conda activate $CondaEnv; python ./src/csv_tropomi_oversample.py"; wait;
+    sbatch -W --export=NONE -J mod_3Da -p $Partition -t 2-00:00 --mem 1800000 -c 7 --wrap "source ~/.bashrc; conda activate $CondaEnv; python ./src/csv_tropomi_oversample.py"; wait;
     rm slurm*.out
 
     # oversample the data
@@ -420,5 +420,6 @@ if "$Oversample_TROPOMI"; then
     end_time=$(date +%s)
     printf "=== Finished oversampling TROPOMI data in $(( ($end_time- $start_time)/60 )) Minutes ===\n"
     
-    sbatch -W --export=NONE -J mod_3Dc -p $Partition -t 1-00:00 --mem 1800000 -c 6 --wrap "source ~/.bashrc; conda activate $CondaEnv; python ./src/plotter.py"
+    # save plots of oversampled data
+    sbatch -W --export=NONE -J mod_3Dc -p $Partition -t 1-00:00 --mem 1800000 -c 7 --wrap "source ~/.bashrc; conda activate $CondaEnv; python ./src/plotter.py"
 fi
