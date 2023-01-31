@@ -1,7 +1,7 @@
 # Blended TROPOMI GOSAT Methane Product
 The entire project can be run by running `run.sh` (e.g., `sbatch -J bash -p shared -t 3-00:00 --mem 1000 --wrap "bash run.sh" --output run.out`). The files that run, where they run, where the outputs are saved, and everything else is controlled by `config.yml`. All of the code that I have written is in `src/`, while code from others is in `tools/`.
 
-The project is broken into modules for downloading data, processing data, and writing data. Each of these modules is broken down below with approximations for their run times (run on the `serial_requeue` partion of Harvard's Cannon cluster), number of cores requested, and total amount of memory requested. Because I was using `serial_requeue`, the resources requested are large. These can be reduced in exchanged for longer run times. At the end of the project, the storage directory specificed in `config.yml` will be ~1.3 TB. After all of the modules have been run, `notebooks/paper.ipynb` and `notebooks/support.ipynb` can be run.
+The project is broken into modules for downloading data, processing data, and writing data. Each of these modules is broken down below with approximations for their run times (run on the `serial_requeue` partion of Harvard's Cannon cluster), number of cores requested, and total amount of memory requested. Because I was using `serial_requeue`, the resources requested are large. These can be reduced in exchanged for longer run times. At the end of the project, the storage directory specificed in `config.yml` will be ~1.3 TB. After all of the modules have been run, `notebooks/paper.ipynb` can be run to make the figures.
 
 * Module 1: Download data
     * **Download_GOSAT**: download GOSAT level 2 data from UoL for 2018-2021 (~5 minutes, 1 core, 4 GB).
@@ -23,4 +23,4 @@ The project is broken into modules for downloading data, processing data, and wr
     * **Write_NetCDF**: write netCDF files that mimic the original TROPOMI data but add a variable for the blended product (~5 minutes, 512 cores, 1536 GB).
     * **Paired_Regrid**: regrid the TROPOMI and GOSAT pairs to a standard grid (~180 minute, 1 core, 128 GB).
     * **TROPOMI_Regrid**: regrid the TROPOMI data to a standard grid (~1100 minutes, 1 core, 200 GB).
-    * **Oversample_TROPOMI**: for specific regions, oversample TROPOMI data to 0.01 degrees (~560 minutes, 6 cores, 1800 GB). 
+    * **Oversample_TROPOMI**: for specific regions, oversample TROPOMI data to 0.01 degrees (~600 minutes, 4 cores, 1200 GB). 
