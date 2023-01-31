@@ -143,10 +143,10 @@ def f_pair_tropomi_tccon(args):
         elif blended == False:
             tropomi_c = tropomi_subset.loc[idx,"xch4_corrected"]
         
-        # Subset TCCON to be within 2 hours of this specific TROPOMI observation
-        tccon_subset = tccon[(tccon["datetime"] >= (tropomi_time - datetime.timedelta(hours=2))) & (tccon["datetime"] < (tropomi_time + datetime.timedelta(hours=2)))]
+        # Subset TCCON to be within 1 hour of this specific TROPOMI observation
+        tccon_subset = tccon[(tccon["datetime"] >= (tropomi_time - datetime.timedelta(hours=1))) & (tccon["datetime"] < (tropomi_time + datetime.timedelta(hours=1)))]
         
-        # If there are any TCCON measurements within 2 hours of this specific TROPOMI observation
+        # If there are any TCCON measurements within 1 hour of this specific TROPOMI observation
         if len(tccon_subset) != 0:
             
             # Choose TCCON measurement closest in time
