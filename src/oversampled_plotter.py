@@ -15,9 +15,22 @@ with open("config.yml", "r") as f:
     config = yaml.safe_load(f)
 
 def f_plotter(args):
+    
+    '''
+    Plots full domains of 0.01 degree oversampled data
+    Saves .png files to RunDir/paper_figures/oversampled_figres
+
+    Arguments
+        basename [str] : file name that points to correct files in StorageDir/oversample/output
+        res [float] : resolution of oversampled data that is suffix of files in StorageDir/oversample/output
+        extent [list] : longitude and latitude minimums and maximums that define the plotting region
+
+    Returns
+        none [none] : function doesn't return anything but saves a 6 png files per basename
+    '''
 
     basename,res,extent = args
-    
+
     blended = pd.read_fwf(f"{config['StorageDir']}/oversample/output/{basename}_Blended_oversampled{res}.csv", header=None, widths=[6,6,12,12,15,6], names=["row","col","lat","lon","xch4_blended","n"], usecols=["lat","lon","xch4_blended","n"])
     sron = pd.read_fwf(f"{config['StorageDir']}/oversample/output/{basename}_SRON_oversampled{res}.csv", header=None, widths=[6,6,12,12,15,6], names=["row","col","lat","lon","xch4_corrected","n"], usecols=["lat","lon","xch4_corrected","n"])
     albedo = pd.read_fwf(f"{config['StorageDir']}/oversample/output/{basename}_SWIR_Surface_albedo_oversampled{res}.csv", header=None, widths=[6,6,12,12,15,6], names=["row","col","lat","lon","swir_surface_albedo","n"], usecols=["lat","lon","swir_surface_albedo","n"])
@@ -84,7 +97,7 @@ def f_plotter(args):
     gl = ax.gridlines(draw_labels=True, zorder=-1, linewidth=0)
     gl.top_labels = gl.right_labels = False
     fig.savefig(f"{config['RunDir']}/notebooks/paper_figures/oversampled_figs/{basename}_Albedo.png", dpi=300, bbox_inches="tight")
-    
+
     fig,ax = plt.subplots(figsize=(15,15), subplot_kw={"projection":ccrs.PlateCarree()})
     ax.imshow(np.tile(np.array([[[200, 200, 200]]],dtype=np.uint8), [2, 2, 1]),origin='upper',transform=ccrs.PlateCarree(),extent=[-180, 180, -90, 90])
     ax.add_collection(altitude_collection)
@@ -95,7 +108,7 @@ def f_plotter(args):
     gl = ax.gridlines(draw_labels=True, zorder=-1, linewidth=0)
     gl.top_labels = gl.right_labels = False
     fig.savefig(f"{config['RunDir']}/notebooks/paper_figures/oversampled_figs/{basename}_Altitude.png", dpi=300, bbox_inches="tight")
-    
+
     fig,ax = plt.subplots(figsize=(15,15), subplot_kw={"projection":ccrs.PlateCarree()})
     ax.imshow(np.tile(np.array([[[200, 200, 200]]],dtype=np.uint8), [2, 2, 1]),origin='upper',transform=ccrs.PlateCarree(),extent=[-180, 180, -90, 90])
     ax.add_collection(aerosol_collection)
@@ -119,14 +132,12 @@ def f_plotter(args):
     fig.savefig(f"{config['RunDir']}/notebooks/paper_figures/oversampled_figs/{basename}_n.png", dpi=300, bbox_inches="tight")
     
 if __name__ == "__main__":
-    args = [["TROPOMI_NorthAfrica_2018",0.01,[-20,65,0,40]],\
-            ["TROPOMI_NorthAfrica_2019",0.01,[-20,65,0,40]],\
-            ["TROPOMI_NorthAfrica_2020",0.01,[-20,65,0,40]],\
-            ["TROPOMI_NorthAfrica_2021",0.01,[-20,65,0,40]],\
-            ["TROPOMI_NorthAfrica_No_Mixed_2021",0.01,[-20,65,0,40]],\
-            ["TROPOMI_NorthAmerica_2021",0.01,[-135,-60,15,60]],\
-            ["TROPOMI_NorthAmerica_No_Mixed_2021",0.01,[-135,-60,15,60]]]
     
-    pool = multiprocessing.Pool(7)
+    args = [["TROPOMI_NorthAfrica_2021",0.01,[-20,65,0,40]],\
+            ["TROPOMI_NorthAfrica_Filter_2021",0.01,[-20,65,0,40]],\
+            ["TROPOMI_NorthAmerica_2021",0.01,[-135,-60,15,60]],\
+            ["TROPOMI_NorthAmerica_Filter_2021",0.01,[-135,-60,15,60]]]
+    
+    pool = multiprocessing.Pool(4)
     pool.map(f_plotter, args)
     pool.close()
