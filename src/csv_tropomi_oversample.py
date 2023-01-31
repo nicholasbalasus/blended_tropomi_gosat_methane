@@ -69,12 +69,9 @@ def csv_oversample(args):
                 cross_antimeridian[i] = not((len(np.where(lonc[i] > 179)[0]) > 0) & (len(np.where(lonc[i] < -179)[0]) > 0))
             valid_idx &= cross_antimeridian
             
-            # Remove coastal pixels if necessary
-            if "No_Coastal" in filename:
-                valid_idx &= (ds["meteo/landflag"][:] != 3)
-            elif "No_Mixed" in filename:
-                valid_idx &= (ds["meteo/landflag"][:] != 2)
-                valid_idx &= (ds["meteo/landflag"][:] != 3)
+            # Remove coastal pixels if necessary (landflag == 3 AND landflag == 2 with SWIR chi2 > 20)
+            if "Filter" in filename:
+                valid_idx &= ~((ds["meteo/landflag"][:] == 3) | ((ds["meteo/landflag"][:] == 2) & (ds["diagnostics/chi_squared_band"][:][:,1] > 20)))
             
             # As we loop through each file, append the tropomi retrievals that intersect with the oversampling region
             for var in ["xch4_corrected","xch4_blended","xch4_precision"]:
@@ -90,7 +87,6 @@ def csv_oversample(args):
                 tropomi[f"lon{i}"] = np.append(tropomi[f"lon{i}"],ds[f"instrument/longitude_corners"][:,i][valid_idx])
             tropomi["lat"] = np.append(tropomi["lat"],ds["instrument/latitude_center"][:][valid_idx])
             tropomi["lon"] = np.append(tropomi["lon"],ds["instrument/longitude_center"][:][valid_idx])
-
 
     # Form the CSV files
     tropomi = pd.DataFrame.from_dict(tropomi)
@@ -109,14 +105,11 @@ def csv_oversample(args):
     
 if __name__ == "__main__":
     
-    args = [["TROPOMI_NorthAfrica_2018",1130,6307,-20,65,0,40],\
-            ["TROPOMI_NorthAfrica_2019",6308,11486,-20,65,0,40],\
-            ["TROPOMI_NorthAfrica_2020",11487,16678,-20,65,0,40],\
-            ["TROPOMI_NorthAfrica_2021",16679,21856,-20,65,0,40],\
-            ["TROPOMI_NorthAfrica_No_Mixed_2021",16679,21856,-20,65,0,40],\
+    args = [["TROPOMI_NorthAfrica_2021",16679,21856,-20,65,0,40],\
+            ["TROPOMI_NorthAfrica_Filter_2021",16679,21856,-20,65,0,40],\
             ["TROPOMI_NorthAmerica_2021",16679,21856,-135,-60,15,60],\
-            ["TROPOMI_NorthAmerica_No_Mixed_2021",16679,21856,-135,-60,15,60]]
+            ["TROPOMI_NorthAmerica_Filter_2021",16679,21856,-135,-60,15,60]]
     
-    pool = multiprocessing.Pool(7)
+    pool = multiprocessing.Pool(4)
     pool.map(csv_oversample, args)
     pool.close()
