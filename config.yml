@@ -1,6 +1,6 @@
 RunDir: "/n/home06/nbalasus/blended_tropomi_gosat_methane"
 StorageDir: "/n/holylfs05/LABS/jacob_lab/nbalasus/blended_tropomi_gosat_methane"
-Partition: huce_bigmem
+Partition: serial_requeue
 Cores: 16
 CondaEnv: ch4_env 
 
@@ -12,21 +12,21 @@ Model: lgbm
 a: 1.26
 b: 0.13
 
-Make_Conda_Env: false
-Download_GOSAT: false
-Download_TROPOMI: false
-Download_TCCON: false
-Process_GOSAT: false
-Process_TROPOMI: false
-Pair_TROPOMI_GOSAT: false
-Process_TROPOMI_GOSAT_Pairs: false
-Pair_GOSAT_TCCON: false
-Run_FLAML: false
-Predict_Delta_GOSAT_TROPOMI: false
-Pair_TROPOMI_TCCON: false
-SHAP_Explainer: false
-Write_NetCDF: false
-Paired_Regrid: false
-GOSAT_Regrid: false
-TROPOMI_Regrid: false
+Make_Conda_Env: true
+Download_GOSAT: true
+Download_TROPOMI: true
+Download_TCCON: true
+Process_GOSAT: true
+Process_TROPOMI: true
+Pair_TROPOMI_GOSAT: true
+Process_TROPOMI_GOSAT_Pairs: true
+Pair_GOSAT_TCCON: true
+Run_FLAML: true
+Predict_Delta_GOSAT_TROPOMI: true
+Pair_TROPOMI_TCCON: true
+SHAP_Explainer: true
+Write_NetCDF: true
+Paired_Regrid: true
+GOSAT_Regrid: true
+TROPOMI_Regrid: true
 Oversample_TROPOMI: true
