@@ -1,5 +1,5 @@
 # Blended TROPOMI GOSAT Methane Product
-The entire project can be run by running `run.sh` (e.g., `sbatch -J bash -p shared -t 3-00:00 --mem 1000 --wrap "bash run.sh" --output run.out`). The files that run, where they run, where the outputs are saved, and everything else is controlled by `config.yml`. All of the code that I have written is in `src/`, while code from others is in `tools/`.
+The entire project can be run by running `run.sh` (e.g., `sbatch -J bash -p seas_compute -t 3-00:00 --mem 1000 --wrap "bash run.sh" --output run.out`). The files that run, where they run, where the outputs are saved, and everything else is controlled by `config.yml`. All of the code that I have written is in `src/`, while code from others is in `tools/`.
 
 The project is broken into modules for downloading data, processing data, and writing data. Each of these modules is broken down below with approximations for their run times (run on the `serial_requeue` partion of Harvard's Cannon cluster), number of cores requested, and total amount of memory requested. Because I was using `serial_requeue`, the resources requested are large. These can be reduced in exchanged for longer run times. At the end of the project, the storage directory specificed in `config.yml` will be ~1.3 TB. After all of the modules have been run, `notebooks/paper.ipynb` can be run to make the figures.
 
