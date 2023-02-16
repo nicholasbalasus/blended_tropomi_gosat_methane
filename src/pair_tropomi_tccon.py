@@ -101,7 +101,10 @@ def f_pair_tropomi_tccon(args):
     tropomi_subset = pd.DataFrame()
     for file in tropomi_files:
         tropomi = pd.concat([pd.read_pickle(tropomi_processed_dir + file),pd.read_pickle(blended_tropomi_gosat_dir + file)], axis=1) # regular TROPOMI + blended product var
-        valid_idx = (tropomi[station+"_distance_km"] <= 100) & (np.abs(tropomi["surface_altitude"] - tccon_station_altitude[station]*1000) <= 250)
+        if station == "Edwards":
+            valid_idx = (tropomi[station+"_distance_km"] <= 50) & (np.abs(tropomi["surface_altitude"] - tccon_station_altitude[station]*1000) <= 250)
+        else:
+            valid_idx = (tropomi[station+"_distance_km"] <= 100) & (np.abs(tropomi["surface_altitude"] - tccon_station_altitude[station]*1000) <= 250)
         tropomi_subset_tmp = tropomi[valid_idx].reset_index(drop=True)
         if len(tropomi_subset) == 0: # i.e., if this is the first file
             tropomi_subset = tropomi_subset_tmp
@@ -112,7 +115,7 @@ def f_pair_tropomi_tccon(args):
     # Include variables for TROPOMI, TCCON, and delta so we can see if our analysis is robust to accounting for differences in priors/avg. kernels
     all_pairs = pd.DataFrame()
     all_pairs.index = tropomi_subset.index
-    for var in ["time","tropomi_xch4","tccon_xch4","delta_tropomi_tccon"]:
+    for var in ["time","tropomi_xch4","tccon_xch4","delta_tropomi_tccon","tropomi_swir_surface_albedo","tropomi_aerosol_size"]:
         all_pairs[var] = np.nan
         
     # Read in netCDF of TCCON data and form a dataframe from it
@@ -142,6 +145,8 @@ def f_pair_tropomi_tccon(args):
             tropomi_c = tropomi_subset.loc[idx,"xch4_blended_tropomi_gosat"]
         elif blended == False:
             tropomi_c = tropomi_subset.loc[idx,"xch4_corrected"]
+        tropomi_swir_surface_albedo = tropomi_subset.loc[idx,"swir_surface_albedo"]
+        tropomi_aerosol_size = tropomi_subset.loc[idx,"aerosol_size"]
         
         # Subset TCCON to be within 1 hour of this specific TROPOMI observation
         tccon_subset = tccon[(tccon["datetime"] >= (tropomi_time - datetime.timedelta(hours=1))) & (tccon["datetime"] < (tropomi_time + datetime.timedelta(hours=1)))]
@@ -178,6 +183,8 @@ def f_pair_tropomi_tccon(args):
             all_pairs.loc[idx,"tropomi_xch4"] = tropomi_c
             all_pairs.loc[idx,"tccon_xch4"] = tccon_subset["xch4"]
             all_pairs.loc[idx,"delta_tropomi_tccon"] = c_tropomi_on_tccon_prior - c_tccon_on_tropomi_avg_k
+            all_pairs.loc[idx,"tropomi_swir_surface_albedo"] = tropomi_swir_surface_albedo
+            all_pairs.loc[idx,"tropomi_aerosol_size"] = tropomi_aerosol_size
         
     # Drop any row that has a NaN
     all_pairs = all_pairs[~all_pairs.isnull().any(axis=1)].reset_index(drop=True)
