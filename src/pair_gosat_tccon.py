@@ -96,7 +96,10 @@ def f_pair_gosat_tccon(args):
     gosat = pd.read_pickle(gosat_processed_dir + "gosat_data.pkl")
     
     # Subset GOSAT to that within 500 km spatially and 250 m of altitude of the TCCON station
-    valid_idx = (gosat[station+"_distance_km"] <= 500) & (np.abs(gosat["surface_altitude"] - tccon_station_altitude[station]*1000) <= 250)
+    if station == "Edwards":
+        valid_idx = (gosat[station+"_distance_km"] <= 50) & (np.abs(gosat["surface_altitude"] - tccon_station_altitude[station]*1000) <= 250)
+    else:
+        valid_idx = (gosat[station+"_distance_km"] <= 500) & (np.abs(gosat["surface_altitude"] - tccon_station_altitude[station]*1000) <= 250)
     gosat_subset = gosat[valid_idx].reset_index(drop=True)
 
     # Dataframe that will contain our pairs of GOSAT/TCCON
