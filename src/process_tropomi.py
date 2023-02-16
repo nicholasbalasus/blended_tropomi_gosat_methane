@@ -52,7 +52,6 @@ def f_process_tropomi(file):
     '''
     Function that converts the netCDF TROPOMI orbit files into pandas datafamres
     Reduces to only the variables we are interested in and subsets to quality assurance value of 1
-    Adds a variable to see if coastlines are intersected
 
     Arguments
         file [str] : name of TROPOMI level 2 file in tropomi_raw_dir
