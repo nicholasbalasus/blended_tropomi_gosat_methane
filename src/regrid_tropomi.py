@@ -53,7 +53,7 @@ def regrid(filename,start_orbit,end_orbit,lon_lower,lon_upper,lon_res,lat_lower,
                 if len(df1) != 0:
                     df2 = pd.read_pickle(blended_tropomi_gosat_dir+file) # corrected with ML
                     assert len(df1) == len(df2)
-                    df = pd.concat([df1[["latitude","longitude","xch4_corrected","swir_surface_albedo","nir_surface_albedo","aerosol_size","landflag"]],df2], axis=1) # add the corrected data
+                    df = pd.concat([df1[["latitude","longitude","xch4","xch4_corrected","swir_surface_albedo","nir_surface_albedo","aerosol_size","landflag"]],df2], axis=1) # add the corrected data
                     df = df[(df["latitude"] >= lat_lower) & (df["latitude"] <= lat_upper) & (df["longitude"] >= lon_lower) & (df["longitude"] <= lon_upper)].reset_index(drop=True)
 
                     if "Water" in filename:
@@ -76,7 +76,7 @@ def regrid(filename,start_orbit,end_orbit,lon_lower,lon_upper,lon_res,lat_lower,
                 if len(df1) != 0:
                     df2 = pd.read_pickle(blended_tropomi_gosat_dir+file) # corrected with ML
                     assert len(df1) == len(df2)
-                    df = pd.concat([df1[["latitude","longitude","xch4_corrected","swir_surface_albedo","nir_surface_albedo","aerosol_size","landflag"]],df2], axis=1) # add the corrected data
+                    df = pd.concat([df1[["latitude","longitude","xch4","xch4_corrected","swir_surface_albedo","nir_surface_albedo","aerosol_size","landflag"]],df2], axis=1) # add the corrected data
                     df = df[(df["latitude"] >= lat_lower) & (df["latitude"] <= lat_upper) & (df["longitude"] >= lon_lower) & (df["longitude"] <= lon_upper)].reset_index(drop=True)
 
                     if "Water" in filename:
@@ -118,7 +118,7 @@ def regrid(filename,start_orbit,end_orbit,lon_lower,lon_upper,lon_res,lat_lower,
         # Loop through each grid cell in the standard grid 
         # For each grid cell, take every tropomi measurement that is within it and average/count them
         tropomi_subset = merged_tropomi[merged_tropomi["index_right"] == idx]
-        for var in ["xch4_corrected","xch4_blended_tropomi_gosat","swir_surface_albedo","nir_surface_albedo","aerosol_size"]:
+        for var in ["xch4","xch4_corrected","xch4_blended_tropomi_gosat","swir_surface_albedo","nir_surface_albedo","aerosol_size"]:
             grid.loc[idx, "tropomi_"+var] = tropomi_subset[var].mean()
         grid.loc[idx, "tropomi_n"] = len(tropomi_subset)
         
