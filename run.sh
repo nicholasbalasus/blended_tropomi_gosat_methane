@@ -8,7 +8,7 @@
 # Email: nicholasbalasus@g.harvard.edu
 #############################################################################
 
-# To run this: sbatch -J bash -p seas_compute -t 3-00:00 --mem 32000 --wrap "bash run.sh" --output run.out
+# To run this: sbatch -J bash -p huce_cascade -t 5-00:00 --mem 32000 --wrap "bash run.sh" --output run.out
 
 # Source .bashrc to gain access to miniconda
 source ~/.bashrc
@@ -18,10 +18,7 @@ source tools/parse_yaml.sh
 eval $(parse_yaml config.yml)
 
 # Make necessary directories if they don't exist
-mkdir -p $StorageDir/gosat $StorageDir/tropomi $StorageDir/blended_tropomi_gosat $StorageDir/tccon $StorageDir/geojson $StorageDir/pkl $StorageDir/oversample
-mkdir -p $StorageDir/pkl/gosat $StorageDir/pkl/tropomi $StorageDir/pkl/blended_tropomi_gosat $StorageDir/pkl/paired $StorageDir/pkl/flaml $StorageDir/pkl/tccon
-mkdir -p $StorageDir/pkl/tccon/gosat $StorageDir/pkl/tccon/tropomi
-mkdir -p $StorageDir/oversample/input $StorageDir/oversample/output
+mkdir -p $StorageDir/gosat $StorageDir/tropomi $StorageDir/tccon
 
 #############################################################################
 # Module Number: 0 
@@ -50,7 +47,7 @@ if "$Download_GOSAT"; then
     cd $StorageDir/gosat
     [ "$(ls -A)" ] && printf "ERROR: The GOSAT directory is not empty. Remove everything in ${PWD} and try again.\n" && exit 1
 
-    # download all GOSAT data as a tar file - last access 5 Dec 2022
+    # download all GOSAT data as a tar file - last access 18 Mar 2023
     sbatch -W -J mod_1A -p $Partition -t 60 --mem 4000 --wrap "wget -q https://dap.ceda.ac.uk/neodc/gosat/data/ch4/nceov1.0/CH4_GOS_OCPR/CH4_GOS_OCPR_v9.0_final_nceo_2009_2021.tar.gz"; wait;
     rm slurm*.out
     # extract the tar file then remove it
@@ -63,6 +60,13 @@ if "$Download_GOSAT"; then
     rm -r CH4_GOS_OCPR
     mv 2018/* 2019/* 2020/* 2021/* -t .
     rm -r 2018 2019 2020 2021
+    # remove the first four months of 2018 where we don't have TROPOMI data
+    rm UoL-GHG-L2-CH4-GOSAT-OCPR-201801*-fv9.0.nc
+    rm UoL-GHG-L2-CH4-GOSAT-OCPR-201802*-fv9.0.nc
+    rm UoL-GHG-L2-CH4-GOSAT-OCPR-201803*-fv9.0.nc
+    mv UoL-GHG-L2-CH4-GOSAT-OCPR-20180430-fv9.0.nc -t ..
+    rm UoL-GHG-L2-CH4-GOSAT-OCPR-201804*-fv9.0.nc
+    mv ../UoL-GHG-L2-CH4-GOSAT-OCPR-20180430-fv9.0.nc -t .
 
     end_time=$(date +%s)
     printf "=== Finished Downloading GOSAT Data in $(( ($end_time- $start_time)/60 )) Minutes ===\n"
@@ -83,20 +87,31 @@ if "$Download_TROPOMI"; then
     # if directory is not empty, exit the script
     [ "$(ls -A)" ] && printf "ERROR: The TROPOMI directory is not empty. Remove everything in ${PWD} and try again.\n" && exit 1
 
-    # write a text file of all of the urls to download (some of these orbit numbers might not exist in the ftp which is okay with wget)
-    # orbit numbers 01130-21856 corresponds to all of 2018-2021 - last access 5 Dec 2022
-    touch tropomi_urls.txt
-    for i in {01130..21856}
-    do
-        echo "ftp://ftp.sron.nl/open-access-data-2/TROPOMI/tropomi/ch4/19_446/s5p_l2_ch4_0446_$i.nc" >> tropomi_urls.txt
-    done; wait;
+    # write a text file of all of the urls to download
+    # we can only get information about 100 files at a time, so run a while loop until we run out of files (using prev_length variable)
+    touch files.txt
+    prev_length=-1
+    s=0
+    while true; do
+        wget -q --no-check-certificate --user=s5pguest --password=s5pguest --output-document="output.txt" "https://s5phub.copernicus.eu/dhus/search?q=platformname:Sentinel-5 AND producttype:L2__CH4___ AND processingmode:Reprocessing AND processorversion:020400 AND endposition:[2018-01-01T00:00:00.000Z TO 2021-12-31T23:59:59.999Z]&rows=100&start=$s"
+        grep "link href=\"https" output.txt >> files.txt
+        length=$(wc -l < files.txt)
+        if [ "$length" -eq "$prev_length" ]; then
+            break
+        fi
+        prev_length=$length
+        s=$((s+100))
+    done
+    sed -i -e 's/<link href=//g' files.txt
+    sed -i -e 's/\/>//g' files.txt
 
-    # download tropomi data with a maximum of 8 wget running simultaneously
-    sbatch -W -J mod_1B -p $Partition -t 300 -c 8 --mem 32000 --wrap "cat tropomi_urls.txt | xargs -n 1 -P 8 wget"; wait;
+    # download tropomi data with a maximum of 16 wget running simultaneously
+    sbatch -W -J mod_1B -p $Partition -t 5760 -c 16 --mem 32000 --wrap "xargs -n 1 -P 16 wget --content-disposition --continue --no-check-certificate --tries=5 --user=s5pguest --password=s5pguest < files.txt"; wait;
     rm slurm*.out
 
-    # remove text file of urls
-    rm tropomi_urls.txt
+    # remove text files
+    rm files.txt
+    rm output.txt
 
     end_time=$(date +%s)
     printf "=== Finished Downloading TROPOMI Data in $(( ($end_time- $start_time)/60 )) Minutes ===\n"
@@ -118,7 +133,7 @@ if "$Download_TCCON"; then
     [ "$(ls -A)" ] && printf "ERROR: The TCCON directory is not empty. Remove everything in ${PWD} and try again.\n" && exit 1
 
     # download all TCCON data as a tgz file
-    # data last accessed at this link on 5 Dec 2022
+    # data last accessed at this link on 18 Mar 2023
     sbatch -W -J mod_1C -p $Partition -t 30 --mem 4000 --wrap "wget https://renc.osn.xsede.org/ini210004tommorrell/10.14291/TCCON.GGG2020/tccon.latest.public.tgz --max-redirect=2 --trust-server-names --content-disposition -q"; wait;
     rm slurm*.out
     
