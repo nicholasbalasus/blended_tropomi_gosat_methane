@@ -1,45 +1,33 @@
-import pandas as pd
-import pickle
 from flaml import AutoML
-import datetime
+import pandas as pd
+import os
 import yaml
 
-# Config file with settings
+# Load configuration file
 with open("config.yml", "r") as f:
     config = yaml.safe_load(f)
 
-# Key directories
-flaml_dir = config["StorageDir"] + "/pkl/flaml/"
-
 def run_flaml():
-    
-    '''
-    Function that trains a machine learning model to predict delta(TROPOMI-GOSAT)
-    Uses FLAML for tuning and gives 1 hour to each of lightgbm, random forest, and xgboost
 
-    Arguments
-        none [none] : no arguments are explicity fed to the function; the filtered tropomi gosat pairs are used though
-
-    Returns
-        none [none] : nothing is explicity returned from the function, though the best model for lgbm, rf, and xgboost are saved to flaml_dir
-    '''
-
-    # Read in processed TROPOMI/GOSAT pairs
-    pairs = pd.read_pickle(flaml_dir+"filtered_tropomi_gosat_pairs.pkl").sort_values("tropomi_time").reset_index(drop=True)
+    # Read in TROPOMI/GOSAT pairs
+    tropomi_gosat_pairs = pd.read_pickle(os.path.join(config["StorageDir"], "processed", "tropomi_gosat_pairs.pkl"))
 
     # Define predictor variables
-    X = pairs[["tropomi_sza","tropomi_raa","tropomi_surface_altitude","tropomi_surface_altitude_stdv","tropomi_u10","tropomi_v10",\
-               "tropomi_cirrus_reflectance","tropomi_xch4_precision","tropomi_xch4_apriori","tropomi_fluorescence","tropomi_co_column",\
-               "tropomi_co_column_precision","tropomi_h2o_column","tropomi_h2o_column_precision","tropomi_aerosol_size","tropomi_aerosol_size_precision","tropomi_aerosol_column",\
-               "tropomi_aerosol_column_precision","tropomi_aerosol_altitude","tropomi_aerosol_altitude_precision","tropomi_nir_surface_albedo","tropomi_swir_surface_albedo",\
-               "tropomi_nir_surface_albedo_precision","tropomi_swir_surface_albedo_precision","tropomi_nir_aerosol_optical_thickness","tropomi_swir_aerosol_optical_thickness",\
-               "tropomi_nir_chi_squared_band","tropomi_swir_chi_squared_band","tropomi_ground_pixel","tropomi_landflag"]]
+    X = tropomi_gosat_pairs[["tropomi_solar_zenith_angle","tropomi_relative_azimuth_angle","tropomi_across_track_pixel_index",
+                         "tropomi_surface_classification","tropomi_surface_altitude","tropomi_surface_altitude_precision",
+                         "tropomi_eastward_wind","tropomi_northward_wind","tropomi_xch4_apriori","tropomi_reflectance_cirrus_VIIRS_SWIR",
+                         "tropomi_xch4_precision","tropomi_fluorescence","tropomi_co_column","tropomi_co_column_precision",
+                         "tropomi_h2o_column","tropomi_h2o_column_precision","tropomi_aerosol_size","tropomi_aerosol_size_precision",
+                         "tropomi_aerosol_height","tropomi_aerosol_height_precision","tropomi_aerosol_column","tropomi_aerosol_column_precision",
+                         "tropomi_surface_albedo_SWIR","tropomi_surface_albedo_SWIR_precision","tropomi_surface_albedo_NIR",
+                         "tropomi_surface_albedo_NIR_precision","tropomi_aerosol_optical_thickness_SWIR","tropomi_aerosol_optical_thickness_NIR",
+                         "tropomi_chi_square_SWIR","tropomi_chi_square_NIR"]]
 
-    # Define variable to be predicted
-    y = pairs["delta_tropomi_gosat"]
+    # Defin variable to be predicted
+    y = tropomi_gosat_pairs["delta_tropomi_gosat"]
 
     # Training set is 2018-2020
-    train_index = pairs[pairs["tropomi_time"] < datetime.datetime(2021,1,1,0,0,0)].index
+    train_index = tropomi_gosat_pairs[tropomi_gosat_pairs["tropomi_time"] < pd.to_datetime("2021-01-01")].index
     X_train = X.loc[train_index]
     y_train = y.loc[train_index]
 
@@ -48,7 +36,7 @@ def run_flaml():
         automl = AutoML()
         automl.fit(X_train, y_train, task="regression", metric="mse", time_budget=config["TimeFLAML"], n_jobs=8, estimator_list = [estimator], eval_method="cv", split_type="time", n_splits=10)
         # Save the model
-        with open(flaml_dir + f"model_{estimator}.pkl", "wb") as handle:
+        with open(os.path.join(config["StorageDir"], "processed", f"model_{estimator}.pkl"), "wb") as handle:
             pickle.dump(automl, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
 if __name__ == "__main__":
