@@ -2,6 +2,7 @@ from flaml import AutoML
 import pandas as pd
 import os
 import yaml
+import pickle
 
 # Load configuration file
 with open("config.yml", "r") as f:
