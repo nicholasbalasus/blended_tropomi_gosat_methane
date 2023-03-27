@@ -30,12 +30,12 @@ def f_shap_explainer():
 
     # Form and save explainer
     explainer = shap.TreeExplainer(model.model.estimator)
-    with open(os.path.join(config["StorageDir"], "shap_explainer.pkl"), "wb") as handle:
+    with open(os.path.join(config["StorageDir"], "processed", "shap_explainer.pkl"), "wb") as handle:
         pickle.dump(explainer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # Calculate and save SHAP values for train data
     shap_values_train = explainer(X_train)
-    with open(os.path.join(config["StorageDir"], "shap_values_train.pkl"), "wb") as handle:
+    with open(os.path.join(config["StorageDir"], "processed", "shap_values_train.pkl"), "wb") as handle:
         pickle.dump(shap_values_train, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
 if __name__ == "__main__":
