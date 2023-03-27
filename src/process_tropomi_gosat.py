@@ -66,6 +66,7 @@ def convert_batch_of_tropomi_nc_files_to_dataframe(tropomi_file_batch):
                                "time": np.expand_dims(np.tile(ds["PRODUCT/time_utc"][:][0,:], (mask.shape[2],1)).T, axis=0)[mask],
                                "latitude_bounds": list(ds["PRODUCT/SUPPORT_DATA/GEOLOCATIONS/latitude_bounds"][:][mask]),
                                "longitude_bounds": list(ds["PRODUCT/SUPPORT_DATA/GEOLOCATIONS/longitude_bounds"][:][mask]),
+                               "xch4": ds["PRODUCT/methane_mixing_ratio"][:][mask],
                                "xch4_corrected": ds["PRODUCT/methane_mixing_ratio_bias_corrected"][:][mask],
                                "pressure_interval": ds["PRODUCT/SUPPORT_DATA/INPUT_DATA/pressure_interval"][:][mask],
                                "surface_pressure": ds["PRODUCT/SUPPORT_DATA/INPUT_DATA/surface_pressure"][:][mask],
@@ -140,4 +141,4 @@ if __name__ == "__main__":
     with Pool(n_jobs) as p:
         all_dfs = p.map(convert_batch_of_tropomi_nc_files_to_dataframe, tropomi_file_batches_this_task)
     tropomi_this_task = pd.concat(all_dfs, ignore_index=True)
-    tropomi_this_task.to_pickle(os.path.join(config['StorageDir'], 'tmp', f'chunk{SLURM_ARRAY_TASK_ID}of{SLURM_ARRAY_TASK_COUNT-1}.pkl'), protocol=pickle.HIGHEST_PROTOCOL)
+    tropomi_this_task.to_pickle(os.path.join(config['StorageDir'], 'tmp', f'chunk{str(SLURM_ARRAY_TASK_ID).zfill(3)}of{SLURM_ARRAY_TASK_COUNT-1}.pkl'), protocol=pickle.HIGHEST_PROTOCOL)

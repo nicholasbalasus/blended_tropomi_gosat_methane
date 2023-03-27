@@ -56,7 +56,7 @@ def find_closest_gosat(tropomi_row):
         tropomi_pressure_levels = [tropomi_gosat_pair["tropomi_surface_pressure"] - i*tropomi_gosat_pair["tropomi_pressure_interval"] for i in np.arange(0,13)][::-1] # [Pa]
         tropomi_pressure_layers = np.array([(tropomi_pressure_levels[i]+tropomi_pressure_levels[i+1])/2 for i in np.arange(0,12)])
 
-        c_Tr = tropomi_gosat_pair["tropomi_xch4_corrected"] # [ppb]
+        c_Tr = tropomi_gosat_pair["tropomi_xch4"] # [ppb]
         h_T = tropomi_gosat_pair["tropomi_dry_air_subcolumns"]/np.sum(tropomi_gosat_pair["tropomi_dry_air_subcolumns"]) # [unitless]
         A_T = tropomi_gosat_pair["tropomi_column_averaging_kernel"] # [unitless]
         x_Ga = f_interp_gosat_prior_to_tropomi_pressure_grid(tropomi_pressure_layers) # [ppb]
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     SLURM_ARRAY_TASK_COUNT = int(sys.argv[2])
 
     # Only run if file hasn't already been made
-    if not os.path.isfile(os.path.join(config['StorageDir'], 'tmp', f'tropomi_gosat_pairs_chunk{SLURM_ARRAY_TASK_ID}of{SLURM_ARRAY_TASK_COUNT-1}.pkl')):
+    if not os.path.isfile(os.path.join(config['StorageDir'], 'tmp', f'tropomi_gosat_pairs_chunk{str(SLURM_ARRAY_TASK_ID).zfill(3)}of{SLURM_ARRAY_TASK_COUNT-1}.pkl')):
 
         # Get GOSAT dataframe from previous module
         gosat_df = pd.read_pickle(os.path.join(config['StorageDir'], 'processed', 'gosat.pkl'))
@@ -118,15 +118,15 @@ if __name__ == "__main__":
         all_dfs = [x for x in all_dfs if x is not None]
         if len(all_dfs) > 0:
             tropomi_gosat_pairs_this_task = pd.concat(all_dfs, ignore_index=True)
-            tropomi_gosat_pairs_this_task.to_pickle(os.path.join(config['StorageDir'], 'tmp', f'tropomi_gosat_pairs_chunk{SLURM_ARRAY_TASK_ID}of{SLURM_ARRAY_TASK_COUNT-1}.pkl'), protocol=pickle.HIGHEST_PROTOCOL)
+            tropomi_gosat_pairs_this_task.to_pickle(os.path.join(config['StorageDir'], 'tmp', f'tropomi_gosat_pairs_chunk{str(SLURM_ARRAY_TASK_ID).zfill(3)}of{SLURM_ARRAY_TASK_COUNT-1}.pkl'), protocol=pickle.HIGHEST_PROTOCOL)
         else:
             # Need to create an empty dataframe with the correct column names so as to not mess up the bottom portion
             empty_df = pd.DataFrame({}, columns=list(tropomi_chunk_this_task.add_prefix("tropomi_").columns) + list(gosat_df.add_prefix("gosat_").columns) + ["delta_tropomi_gosat"])
-            empty_df.to_pickle(os.path.join(config['StorageDir'], 'tmp', f'tropomi_gosat_pairs_chunk{SLURM_ARRAY_TASK_ID}of{SLURM_ARRAY_TASK_COUNT-1}.pkl'), protocol=pickle.HIGHEST_PROTOCOL)
+            empty_df.to_pickle(os.path.join(config['StorageDir'], 'tmp', f'tropomi_gosat_pairs_chunk{str(SLURM_ARRAY_TASK_ID).zfill(3)}of{SLURM_ARRAY_TASK_COUNT-1}.pkl'), protocol=pickle.HIGHEST_PROTOCOL)
 
         # We have created 128 files of 'tropomi_gosat_pairs_chunkxof127' (where x starts at 0). We need to merge them to one dataframe.
         # Only can do this after all 128 files are written. This will only be true for one of the 128 tasks.
-        all_files_created = [f'tropomi_gosat_pairs_chunk{x}of{SLURM_ARRAY_TASK_COUNT-1}.pkl' for x in range(SLURM_ARRAY_TASK_COUNT-1)]
+        all_files_created = [f'tropomi_gosat_pairs_chunk{str(x).zfill(3)}of{SLURM_ARRAY_TASK_COUNT-1}.pkl' for x in range(SLURM_ARRAY_TASK_COUNT-1)]
         if all([os.path.isfile(os.path.join(config["StorageDir"], 'tmp', f)) for f in all_files_created]):
             tropomi_gosat_pairs_all_tasks = pd.concat([pd.read_pickle(os.path.join(config["StorageDir"], 'tmp', f)) for f in all_files_created], ignore_index=True)
             tropomi_gosat_pairs_all_tasks = tropomi_gosat_pairs_all_tasks.sort_values("tropomi_time").reset_index(drop=True)
