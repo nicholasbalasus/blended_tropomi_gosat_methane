@@ -8,7 +8,7 @@ import pickle
 with open("config.yml", "r") as f:
     config = yaml.safe_load(f)
 
-def run_flaml():
+def f_run_flaml():
 
     # Read in TROPOMI/GOSAT pairs
     tropomi_gosat_pairs = pd.read_pickle(os.path.join(config["StorageDir"], "processed", "tropomi_gosat_pairs.pkl"))
@@ -41,4 +41,4 @@ def run_flaml():
             pickle.dump(automl, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
 if __name__ == "__main__":
-    run_flaml()
+    f_run_flaml()
