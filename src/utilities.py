@@ -2,7 +2,7 @@ import pandas as pd
 from netCDF4 import Dataset
 import numpy as np
     
-# Function to turn a LIST of netCDF GOSAT files into ONE pandas dataframe
+# Function to turn a list of netCDF GOSAT files into one pandas dataframe
 def get_gosat_df(gosat_files):
 
     gosat_dfs = []
@@ -31,7 +31,7 @@ def get_gosat_df(gosat_files):
     
     return gosat_df
 
-# Function to turn ONE netCDF TROPOMI file into ONE pandas dataframe
+# Function to turn one netCDF TROPOMI file into one pandas dataframe
 def get_tropomi_df(tropomi_file):
     
     with Dataset(tropomi_file) as ds:
@@ -90,7 +90,7 @@ def get_tropomi_df(tropomi_file):
     
     return tropomi_df
 
-# Function to turn ONE TCCON netCDF file into ONE pandas dataframe
+# Function to turn one TCCON netCDF file into one pandas dataframe
 def get_tccon_df(tccon_file):
 
     with Dataset(tccon_file) as ds:
@@ -110,3 +110,23 @@ def get_tccon_df(tccon_file):
             tccon_df["longitude"] -= 2.0
 
     return tccon_df
+
+# Function to turn one netCDF Blended file (written in write_blended_files.py) into one pandas dataframe
+def get_blended_df(blended_file):
+    
+    with Dataset(blended_file) as ds:
+        blended_df = pd.DataFrame({
+                           "latitude": ds["latitude"][:],
+                           "longitude": ds["longitude"][:],
+                           "time": pd.to_datetime(ds["time_utc"][:], format="%Y-%m-%dT%H:%M:%S.%fZ"),
+                           "xch4_corrected": ds["methane_mixing_ratio_bias_corrected"][:],
+                           "xch4_blended": ds["methane_mixing_ratio_blended"][:],
+                           "pressure_interval": ds["pressure_interval"][:],
+                           "surface_pressure": ds["surface_pressure"][:],
+                           "dry_air_subcolumns": list(ds["dry_air_subcolumns"][:]),
+                           "methane_profile_apriori": list(ds["methane_profile_apriori"][:]),
+                           "column_averaging_kernel": list(ds["column_averaging_kernel"][:]),
+                           "surface_altitude": ds["surface_altitude"][:]
+                          })
+    
+    return blended_df
