@@ -5,30 +5,31 @@ import numpy as np
 import glob
 import yaml
 import pickle
+import multiprocessing
 
 from utilities import get_tropomi_df
 
 with open("config.yml", "r") as f:
     config = yaml.safe_load(f)
 
-def predict_blended_xch4(tropomi_file, model):
-
+def predict_delta_tropomi_gosat(tropomi_file, model):
+    
     df = get_tropomi_df(tropomi_file)
     # Get rid of the non-predictor variables
     df = df.drop(["latitude","longitude","time","latitude_bounds","xch4","xch4_corrected","pressure_interval","surface_pressure","dry_air_subcolumns","methane_profile_apriori","column_averaging_kernel"], axis=1) 
     df = df.add_prefix("tropomi_")
-    with Dataset(tropomi_file) as ds:
-        mask = ds["PRODUCT/qa_value"][:] == 1.0
-        assert len(df) == np.sum(mask)
-        blended = ds["PRODUCT/methane_mixing_ratio_bias_corrected"][:][mask] - (config["a"]*model.predict(df) + config["b"])
-    
-    return blended
+    delta_tropomi_gosat = (config["a"]*model.predict(df) + config["b"])
+
+    return delta_tropomi_gosat
 
 def f_write_blended_files(src_file):
     
     # new file will have the same name but with BLND as the acronym and the creation time changed
     dst_file = src_file.split("/")[-1].replace("RPRO","BLND")
-    dst_file = os.path.join(config["StorageDir"], "blended", dst_file[:dst_file.rfind("_")+1], pd.Timestamp.now().strftime("%Y%m%dT%H%M%S"), ".nc")
+    dst_file = os.path.join(config["StorageDir"], "blended", dst_file[:dst_file.rfind("_")+1]+pd.Timestamp.now().strftime("%Y%m%dT%H%M%S")+".nc")
+
+    # remove dst_file if it already exists (weird notation is because the time generated portion of the filename is unique)
+    [os.remove(f) for f in glob.glob(dst_file[:dst_file.rfind("_")+1]+"*")]
 
     with Dataset(src_file) as src, Dataset(dst_file, "w") as dst:
     
@@ -117,7 +118,7 @@ def f_write_blended_files(src_file):
         dst["methane_mixing_ratio_blended"].setncattr("comment", "produced as described in Balasus et al. (2023)")
         with open(os.path.join(config["StorageDir"], "processed", f"model_{config['Model']}.pkl"), "rb") as handle:
             model = pickle.load(handle)
-        dst["methane_mixing_ratio_blended"][:] = predict_blended_xch4(src, model)
+        dst["methane_mixing_ratio_blended"][:] = src["PRODUCT/methane_mixing_ratio_bias_corrected"][:][mask] - predict_delta_tropomi_gosat(src_file, model)
 
 if __name__ == "__main__":
     
