@@ -68,7 +68,9 @@ def f_write_blended_files(src_file):
             dst[var][:] = src["PRODUCT/SUPPORT_DATA/GEOLOCATIONS/"+var][:][mask]
             
         # Copy over variables and their attributes from the PRODUCT/SUPPORT_DATA/DETAILED_RESULTS group
-        vars_to_keep_in_PRODUCT_SUPPORT_DATA_DETAILED_RESULTS = ["chi_square_SWIR","surface_albedo_SWIR","surface_albedo_NIR"]
+        vars_to_keep_in_PRODUCT_SUPPORT_DATA_DETAILED_RESULTS = ["chi_square_SWIR","surface_albedo_SWIR","surface_albedo_NIR",
+                                                                 "surface_albedo_SWIR_precision","surface_albedo_NIR_precision",
+                                                                 "aerosol_size","aerosol_size_precision"]
         for var in vars_to_keep_in_PRODUCT_SUPPORT_DATA_DETAILED_RESULTS:
             dst.createVariable(var, src["PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/"+var].datatype, ('nobs'))
             dst[var].setncatts(src["PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/"+var].__dict__)
@@ -81,8 +83,9 @@ def f_write_blended_files(src_file):
             dst[var][:] = src["PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/"+var][:][mask]
         
         # Copy over variables and their attributes from the PRODUCT/SUPPORT_DATA/INPUT_DATA group
-        vars_to_keep_in_PRODUCT_SUPPORT_DATA_INPUT_DATA = ["surface_altitude","surface_classification","surface_pressure",
-                                                        "pressure_interval","reflectance_cirrus_VIIRS_SWIR"]
+        vars_to_keep_in_PRODUCT_SUPPORT_DATA_INPUT_DATA = ["surface_altitude","surface_altitude_precision",
+                                                           "surface_classification","surface_pressure",
+                                                           "pressure_interval","reflectance_cirrus_VIIRS_SWIR"]
         for var in vars_to_keep_in_PRODUCT_SUPPORT_DATA_INPUT_DATA:
             dst.createVariable(var, src["PRODUCT/SUPPORT_DATA/INPUT_DATA/"+var].datatype, ('nobs'))
             dst[var].setncatts(src["PRODUCT/SUPPORT_DATA/INPUT_DATA/"+var].__dict__)
