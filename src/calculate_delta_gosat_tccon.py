@@ -70,7 +70,7 @@ def get_gosat_tccon_pairs(tccon_file):
                                          tccon_subset_temporal_spatial.loc[closest_tccon:closest_tccon].add_prefix("tccon_").reset_index(drop=True)], axis=1)
         gosat_tccon_pair = gosat_tccon_pair_df.iloc[0]
         
-        # Calculate ∆(TROPOMI-GOSAT) using equations (A1-A4)
+        # Calculate ∆(TROPOMI-GOSAT) using equation (A5)
         gosat_mask = gosat_tccon_pair["gosat_ch4_profile_apriori"][::-1] != -9999.99 # when there are 19 pressure levels
         gosat_pressure_levels = 100*gosat_tccon_pair["gosat_pressure_levels"][::-1][gosat_mask] # [Pa]
         tccon_pressure_levels = gosat_tccon_pair["tccon_prior_pressure"][::-1] # [Pa]
