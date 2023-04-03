@@ -13,6 +13,7 @@ def f_run_flaml_and_shap():
 
     # Read in TROPOMI/GOSAT pairs
     tropomi_gosat_pairs = pd.read_pickle(os.path.join(config["StorageDir"], "processed", "tropomi_gosat_pairs.pkl"))
+    tropomi_gosat_pairs = tropomi_gosat_pairs.sort_values(by=["tropomi_time"]).reset_index(drop=True)
 
     # Define predictor variables
     X = tropomi_gosat_pairs[["tropomi_solar_zenith_angle","tropomi_relative_azimuth_angle","tropomi_across_track_pixel_index",
