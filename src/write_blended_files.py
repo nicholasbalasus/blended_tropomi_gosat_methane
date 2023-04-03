@@ -26,7 +26,7 @@ def f_write_blended_files(src_file):
     
     # new file will have the same name but with BLND as the acronym and the creation time changed
     dst_file = src_file.split("/")[-1].replace("RPRO","BLND")
-    dst_file = os.path.join(config["StorageDir"], "blended", dst_file[:dst_file.rfind("_")+1]+pd.Timestamp.now().strftime("%Y%m%dT%H%M%S")+".nc")
+    dst_file = os.path.join(config["StorageDir"], "blended", dst_file[:dst_file.rfind("_")+1]+pd.Timestamp.utcnow().strftime("%Y%m%dT%H%M%S")+".nc")
 
     # remove dst_file if it already exists (weird notation is because the time generated portion of the filename is unique)
     [os.remove(f) for f in glob.glob(dst_file[:dst_file.rfind("_")+1]+"*")]
@@ -116,7 +116,7 @@ def f_write_blended_files(src_file):
                     del dst[var].ancillary_variables
                     
         # Add blended xch4
-        dst.createVariable("methane_mixing_ratio_blended", src["PRODUCT/methane_mixing_ratio"].dtype, ('nobs'))
+        dst.createVariable("methane_mixing_ratio_blended", src["PRODUCT/methane_mixing_ratio"].datatype, ('nobs'))
         dst["methane_mixing_ratio_blended"].setncatts(src["PRODUCT/methane_mixing_ratio"].__dict__)
         dst["methane_mixing_ratio_blended"].setncattr("comment", "produced as described in Balasus et al. (2023)")
         with open(os.path.join(config["StorageDir"], "processed", f"model_{config['Model']}.pkl"), "rb") as handle:
@@ -126,6 +126,7 @@ def f_write_blended_files(src_file):
 if __name__ == "__main__":
     
     src_files = glob.glob(os.path.join(config["StorageDir"], "tropomi", "*.nc"))
+    src_files.sort()
     num_processes = multiprocessing.cpu_count()
     with multiprocessing.Pool(processes=num_processes) as pool:
         pool.map(f_write_blended_files, src_files)
