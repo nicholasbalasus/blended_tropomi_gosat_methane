@@ -6,6 +6,7 @@ import glob
 import yaml
 import pickle
 import multiprocessing
+import sys
 
 from utilities import get_tropomi_df
 
@@ -29,7 +30,7 @@ def f_write_blended_files(src_file):
     dst_file = os.path.join(config["StorageDir"], "blended", dst_file[:dst_file.rfind("_")+1]+pd.Timestamp.utcnow().strftime("%Y%m%dT%H%M%S")+".nc")
 
     # remove dst_file if it already exists (weird notation is because the time generated portion of the filename is unique)
-    [os.remove(f) for f in glob.glob(dst_file[:dst_file.rfind("_")+1]+"*")]
+    [os.remove(file) for file in glob.glob(dst_file[:dst_file.rfind("_")+1]+"*")]
 
     with Dataset(src_file) as src, Dataset(dst_file, "w") as dst:
     
@@ -119,14 +120,23 @@ def f_write_blended_files(src_file):
         dst.createVariable("methane_mixing_ratio_blended", src["PRODUCT/methane_mixing_ratio"].datatype, ('nobs'))
         dst["methane_mixing_ratio_blended"].setncatts(src["PRODUCT/methane_mixing_ratio"].__dict__)
         dst["methane_mixing_ratio_blended"].setncattr("comment", "produced as described in Balasus et al. (2023)")
-        with open(os.path.join(config["StorageDir"], "processed", f"model_{config['Model']}.pkl"), "rb") as handle:
-            model = pickle.load(handle)
-        dst["methane_mixing_ratio_blended"][:] = src["PRODUCT/methane_mixing_ratio_bias_corrected"][:][mask] - predict_delta_tropomi_gosat(src_file, model)
+        if np.sum(mask) == 0:
+            # Set to be empty because model.predict fails with an empty dataframe
+            dst["methane_mixing_ratio_blended"][:] = src["PRODUCT/methane_mixing_ratio_bias_corrected"][:][mask]
+        else:
+            with open(os.path.join(config["StorageDir"], "processed", f"model_{config['Model']}.pkl"), "rb") as handle:
+                model = pickle.load(handle)
+            dst["methane_mixing_ratio_blended"][:] = src["PRODUCT/methane_mixing_ratio_bias_corrected"][:][mask] - predict_delta_tropomi_gosat(src_file, model)
 
 if __name__ == "__main__":
     
+    # Run this for (1/SLURM_ARRAY_TASK_COUNT) portion of the files 
+    SLURM_ARRAY_TASK_ID = int(sys.argv[1])
+    SLURM_ARRAY_TASK_COUNT = int(sys.argv[2])
+
     src_files = glob.glob(os.path.join(config["StorageDir"], "tropomi", "*.nc"))
     src_files.sort()
+    src_files = np.array_split(src_files, SLURM_ARRAY_TASK_COUNT)[SLURM_ARRAY_TASK_ID]
     num_processes = multiprocessing.cpu_count()
     with multiprocessing.Pool(processes=num_processes) as pool:
         pool.map(f_write_blended_files, src_files)
