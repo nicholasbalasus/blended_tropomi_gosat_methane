@@ -76,6 +76,6 @@ if __name__ == "__main__":
               ("TROPOMI_NorthAfrica_Filter_2021", pd.to_datetime("2021-01-01 00:00:00"), pd.to_datetime("2022-01-01 00:00:00"), (-20.,65.,0.,40.), True)]
     
     with multiprocessing.Pool() as pool:
-        results = pool.starmap(scsv_oversample, inputs)
+        results = pool.starmap(csv_oversample, inputs)
         pool.close()
         pool.join()
