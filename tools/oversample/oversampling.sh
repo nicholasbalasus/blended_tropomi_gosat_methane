@@ -1,6 +1,9 @@
 #!/bin/csh -f
 # @(#) dindex
 
+# Get the storage directory from the first argument
+set StorageDir=$1
+
 #-----------------------------------------------------------------
 # Set path
 #-----------------------------------------------------------------
