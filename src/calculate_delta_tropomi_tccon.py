@@ -9,6 +9,7 @@ from scipy import interpolate
 import multiprocessing
 from netCDF4 import Dataset
 import pickle
+import sys
 
 from utilities import get_blended_df, get_tccon_df
 
@@ -103,6 +104,10 @@ def get_tropomi_tccon_pairs(tropomi_file, tccon_file):
 
 if __name__ == "__main__":
 
+    # Running this across multiple jobs
+    SLURM_ARRAY_TASK_ID = int(sys.argv[1])
+    SLURM_ARRAY_TASK_COUNT = int(sys.argv[2])
+
     # Get list of all TCCON files that intersect the time period of 30 Apr 2018 to 31 Dec 2021
     tccon_dir = os.path.join(config['StorageDir'], 'tccon')
     tccon_files = glob.glob(os.path.join(tccon_dir, "*.nc"))
@@ -111,39 +116,66 @@ if __name__ == "__main__":
                                pd.to_datetime(Dataset(tccon_file)["time"][:], unit="s").max())
                    .overlaps(pd.Interval(pd.to_datetime('2018-04-30 00:00'),
                                           pd.to_datetime('2021-12-31 23:59')))]
-
-    # Dict to hold TROPOMI+TCCON pairs for each station
-    dict_delta_tropomi_tccon = {}
+    tccon_files.sort()    
 
     # Find pairs for each TCCON station
-    for tccon_file in tccon_files:
+    assert SLURM_ARRAY_TASK_COUNT == len(tccon_files)
+    tccon_file = tccon_files[SLURM_ARRAY_TASK_ID]
         
-        with Dataset(tccon_file) as ds:
-            tccon_station_name = ds.long_name
-            print(f"Starting {tccon_station_name}", flush=True)
+    # This section is specific to one TCCON station (i.e., this SLURM_ARRAY_TASK_ID)
+    with Dataset(tccon_file) as ds:
+        tccon_station_name = ds.long_name
+        print(f"Starting {tccon_station_name}", flush=True)
 
-        # Get list of blended files that intersect the TCCON file time range
-        start_tccon_dt = pd.to_datetime(Dataset(tccon_file)["time"][:], unit="s").min()
-        end_tccon_dt = pd.to_datetime(Dataset(tccon_file)["time"][:], unit="s").max()
-        all_blended_files = glob.glob(os.path.join(config["StorageDir"], "blended", "*.nc"))
-        tropomi_files = [file for file in all_blended_files 
-                            if pd.Interval(pd.to_datetime(file.split("_")[12]), pd.to_datetime(file.split("_")[13]))
-                            .overlaps(pd.Interval(start_tccon_dt,end_tccon_dt))]
-        tropomi_files.sort()
+    # Get list of blended files that intersect the TCCON file time range
+    start_tccon_dt = pd.to_datetime(Dataset(tccon_file)["time"][:], unit="s").min()
+    end_tccon_dt = pd.to_datetime(Dataset(tccon_file)["time"][:], unit="s").max()
+    all_blended_files = glob.glob(os.path.join(config["StorageDir"], "blended", "*.nc"))
+    tropomi_files = [file for file in all_blended_files 
+                        if pd.Interval(pd.to_datetime(file.split("_")[12]), pd.to_datetime(file.split("_")[13]))
+                        .overlaps(pd.Interval(start_tccon_dt,end_tccon_dt))]
+    tropomi_files.sort()
 
-        # Get list of inputs for this TCCON station then run get_tropomi_tccon_pairs in parallel
-        inputs = [(tropomi_file, tccon_file) for tropomi_file in tropomi_files]
-        num_processes = multiprocessing.cpu_count()  # Use all available CPU cores
-        with multiprocessing.Pool(processes=num_processes) as pool:
-            results = pool.starmap(get_tropomi_tccon_pairs, inputs)
-            pool.close()
-            pool.join()
-        results = [r for r in results if r is not None]
-        if len(results) != 0:
-            dict_delta_tropomi_tccon[tccon_station_name] = pd.concat(results, ignore_index=True)
+    # Get list of inputs for this TCCON station then run get_tropomi_tccon_pairs in parallel
+    inputs = [(tropomi_file, tccon_file) for tropomi_file in tropomi_files]
+    num_processes = multiprocessing.cpu_count()  # Use all available CPU cores
+    with multiprocessing.Pool(processes=num_processes) as pool:
+        results = pool.starmap(get_tropomi_tccon_pairs, inputs)
+        pool.close()
+        pool.join()
+    results = [r for r in results if r is not None]
+    if len(results) != 0:
+        results = pd.concat(results, ignore_index=True)
+        with open(os.path.join(config['StorageDir'], 'processed', f'{tccon_station_name}_tropomi_tccon.pkl'), "wb") as f:
+            pickle.dump(results, f)
 
-        print(f"Finished {tccon_station_name}", flush=True)
+    print(f"Finished {tccon_station_name}", flush=True)
 
-    # Save dictionary
-    with open(os.path.join(config['StorageDir'], 'processed', 'delta_tropomi_tccon.pkl'), "wb") as f:
-        pickle.dump(dict_delta_tropomi_tccon, f)
+    # Once all of the tasks finish, there will be 25 slurm files (one for each TCCON station)
+    # Additionally, each will have the word "completed" in it
+    # This will only be true for the last SLURM_ARRAY_TASK_ID to finish
+    # When this is true, merge all of the written {tccon_station_name}_tropomi_tccon.pkl files together
+    all_done = False
+    if (len(glob.glob(os.path.join(config["RunDir"], "slurm-" + os.environ.get('SLURM_JOB_ID') + "_*.out"))) == SLURM_ARRAY_TASK_COUNT):
+        all_done = True
+        for file in glob.glob(os.path.join(config["RunDir"], "slurm-" + os.environ.get('SLURM_JOB_ID') + "_*.out")):
+            with open(file, 'r') as f:
+                file_contents = f.read()
+            if "Finished" not in file_contents:
+                all_done = False
+                break
+
+    if all_done:
+        dict_delta_tropomi_tccon = {}
+        for tccon_file in tccon_files:
+            with Dataset(tccon_file) as ds:
+                tccon_station_name = ds.long_name
+
+            if os.path.exists(os.path.join(config["StorageDir"], "processed", f'tropomi_tccon_{tccon_station_name}.pkl')):
+                with open(os.path.join(config["StorageDir"], "processed", f'tropomi_tccon_{tccon_station_name}.pkl'), "rb") as handle:
+                    dict_delta_tropomi_tccon[tccon_station_name] = pickle.load(handle)
+                os.remove(os.path.join(config["StorageDir"], "processed", f'tropomi_tccon_{tccon_station_name}.pkl'))
+
+        # Save the merged file
+        with open(os.path.join(config['StorageDir'], 'processed', 'delta_tropomi_tccon.pkl'), "wb") as f:
+            pickle.dump(dict_delta_tropomi_tccon, f)
