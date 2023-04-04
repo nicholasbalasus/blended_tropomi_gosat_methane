@@ -4,8 +4,8 @@
 #-----------------------------------------------------------------
 # Set path
 #-----------------------------------------------------------------
-set Input_Dir   = "/n/holylfs05/LABS/jacob_lab/nbalasus/blended_tropomi_gosat_methane/oversample/input/"
-set Output_Dir  = "/n/holylfs05/LABS/jacob_lab/nbalasus/blended_tropomi_gosat_methane/oversample/output/"
+set Input_Dir   = "${StorageDir}/oversample/input/"
+set Output_Dir  = "${StorageDir}/oversample/output/"
 
 #-----------------------------------------------------------------
 # Output resolution you want
