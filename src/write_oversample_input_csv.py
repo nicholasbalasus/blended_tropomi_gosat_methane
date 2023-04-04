@@ -69,7 +69,7 @@ def csv_oversample(filename,start_dt,end_dt,extent,filter_bool):
     csv_operational.to_csv(os.path.join(config["StorageDir"], "oversample", "input", filename+"_Operational.csv"), sep=',', float_format='%.6f', header=False, index=True)
     csv_blended.to_csv(os.path.join(config["StorageDir"], "oversample", "input", filename+"_Blended.csv"), sep=',', float_format='%.6f', header=False, index=True)
     csv_sa.to_csv(os.path.join(config["StorageDir"], "oversample", "input", filename+"_SWIR_Surface_Albedo.csv"), sep=',', float_format='%.6f', header=False, index=True)
-    csv_aerosol.to_csv(oos.path.join(config["StorageDir"], "oversample", "input", filename+"_Aerosol_Size.csv"), sep=',', float_format='%.6f', header=False, index=True)
+    csv_aerosol.to_csv(os.path.join(config["StorageDir"], "oversample", "input", filename+"_Aerosol_Size.csv"), sep=',', float_format='%.6f', header=False, index=True)
     
 if __name__ == "__main__":
 
