@@ -14,7 +14,7 @@ with open("config.yml", "r") as f:
     config = yaml.safe_load(f)
 
 # Write a csv file that can be used as input to tools/oversample for all satellite pixels in this time range (start_dt,end_dt) and this domain (extent)
-def csv_oversample(filename,start_dt,end_dt,extent,filter):
+def csv_oversample(filename,start_dt,end_dt,extent,filter_bool):
     
     print(filename, flush=True)
 
@@ -30,7 +30,6 @@ def csv_oversample(filename,start_dt,end_dt,extent,filter):
     # Get list of all blended files that overlap our time period
     blended_files = [f for f in glob.glob(os.path.join(config["StorageDir"], "blended", "*.nc")) if pd.Interval(pd.to_datetime(f.split("_")[12]), pd.to_datetime(f.split("_")[13])).overlaps(pd.Interval(start_dt,end_dt))]
 
-    # START HERE MAYBE? This script needs a lot of work.
     # Compile all of the valid satellite observations into the satellite{} dict
     for blended_file in blended_files:
         with Dataset(blended_file) as ds:
@@ -44,7 +43,7 @@ def csv_oversample(filename,start_dt,end_dt,extent,filter):
                 valid_idx[i] &= (np.max(lonc[i]) - np.min(lonc[i])) < 180
             
             # Remove coastal pixels if necessary (landflag == 3 AND landflag == 2 with SWIR chi2 > 20)
-            if filter:
+            if filter_bool:
                 tropomi_surface_classification = (ds["surface_classification"][:] & 0x03).astype(int)
                 valid_idx &= ~((tropomi_surface_classification == 3) | ((tropomi_surface_classification == 2) & (ds["chi_square_SWIR"][:] > 20)))
             
@@ -60,23 +59,21 @@ def csv_oversample(filename,start_dt,end_dt,extent,filter):
 
     # Form the CSV files
     satellite = pd.DataFrame.from_dict(satellite)
-    csv_sron = satellite[["lat0","lat1","lat2","lat3","lat","lon0","lon1","lon2","lon3","lon","xch4_corrected","xch4_precision"]]
-    csv_blended = satellite[["lat0","lat1","lat2","lat3","lat","lon0","lon1","lon2","lon3","lon","xch4_blended","xch4_precision"]]
-    csv_sa = satellite[["lat0","lat1","lat2","lat3","lat","lon0","lon1","lon2","lon3","lon","swir_surface_albedo","swir_surface_albedo_precision"]]
-    csv_h = satellite[["lat0","lat1","lat2","lat3","lat","lon0","lon1","lon2","lon3","lon","surface_altitude","surface_altitude_stdv"]]
+    csv_operational = satellite[["lat0","lat1","lat2","lat3","lat","lon0","lon1","lon2","lon3","lon","methane_mixing_ratio_bias_corrected","methane_mixing_ratio_precision"]]
+    csv_blended = satellite[["lat0","lat1","lat2","lat3","lat","lon0","lon1","lon2","lon3","lon","methane_mixing_ratio_blended","methane_mixing_ratio_precision"]]
+    csv_sa = satellite[["lat0","lat1","lat2","lat3","lat","lon0","lon1","lon2","lon3","lon","surface_albedo_SWIR","surface_albedo_SWIR_precision"]]
     csv_aerosol = satellite[["lat0","lat1","lat2","lat3","lat","lon0","lon1","lon2","lon3","lon","aerosol_size","aerosol_size_precision"]]
 
     # Save the CSV files
-    csv_sron.to_csv(oversample_input_dir+filename+"_SRON.csv", sep=',', float_format='%.6f', header=False, index=True)
-    csv_blended.to_csv(oversample_input_dir+filename+"_Blended.csv", float_format='%.6f', header=False, index=True)
-    csv_sa.to_csv(oversample_input_dir+filename+"_SWIR_Surface_albedo.csv", float_format='%.6f', header=False, index=True)
-    csv_h.to_csv(oversample_input_dir+filename+"_Surface_altitude.csv", float_format='%.6f', header=False, index=True)
-    csv_aerosol.to_csv(oversample_input_dir+filename+"_Aerosol_size.csv", float_format='%.6f', header=False, index=True)
+    csv_operational.to_csv(os.path.join(config["StorageDir"], "oversample", "input", filename+"_Operational.csv"), sep=',', float_format='%.6f', header=False, index=True)
+    csv_blended.to_csv(os.path.join(config["StorageDir"], "oversample", "input", filename+"_Blended.csv"), sep=',', float_format='%.6f', header=False, index=True)
+    csv_sa.to_csv(os.path.join(config["StorageDir"], "oversample", "input", filename+"_SWIR_Surface_Albedo.csv"), sep=',', float_format='%.6f', header=False, index=True)
+    csv_aerosol.to_csv(oos.path.join(config["StorageDir"], "oversample", "input", filename+"_Aerosol_Size.csv"), sep=',', float_format='%.6f', header=False, index=True)
     
 if __name__ == "__main__":
 
-    inputs = [("TROPOMI_NorthAfrica_2021", pd.to_datetime("2021-01-01 00:00:00"), pd.to_datetime("2021-01-01 00:00:00"), (-20.,65.,0.,40.), False),
-              ("TROPOMI_NorthAfrica_Filter_2021", pd.to_datetime("2021-01-01 00:00:00"), pd.to_datetime("2021-01-01 00:00:00"), (-20.,65.,0.,40.), True)]
+    inputs = [("TROPOMI_NorthAfrica_2021", pd.to_datetime("2021-01-01 00:00:00"), pd.to_datetime("2022-01-01 00:00:00"), (-20.,65.,0.,40.), False),
+              ("TROPOMI_NorthAfrica_Filter_2021", pd.to_datetime("2021-01-01 00:00:00"), pd.to_datetime("2022-01-01 00:00:00"), (-20.,65.,0.,40.), True)]
     
     with multiprocessing.Pool() as pool:
         results = pool.starmap(scsv_oversample, inputs)
