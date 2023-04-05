@@ -126,7 +126,9 @@ def get_blended_df(blended_file):
                            "dry_air_subcolumns": list(ds["dry_air_subcolumns"][:]),
                            "methane_profile_apriori": list(ds["methane_profile_apriori"][:]),
                            "column_averaging_kernel": list(ds["column_averaging_kernel"][:]),
-                           "surface_altitude": ds["surface_altitude"][:]
+                           "surface_altitude": ds["surface_altitude"][:],
+                           "surface_albedo_SWIR": ds["surface_albedo_SWIR"][:],
+                           "aerosol_size": ds["aerosol_size"][:]
                           })
     
     return blended_df
