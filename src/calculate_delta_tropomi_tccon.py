@@ -171,10 +171,10 @@ if __name__ == "__main__":
             with Dataset(tccon_file) as ds:
                 tccon_station_name = ds.long_name
 
-            if os.path.exists(os.path.join(config["StorageDir"], "processed", f'tropomi_tccon_{tccon_station_name}.pkl')):
-                with open(os.path.join(config["StorageDir"], "processed", f'tropomi_tccon_{tccon_station_name}.pkl'), "rb") as handle:
+            if os.path.exists(os.path.join(config["StorageDir"], "processed", f'{tccon_station_name}_tropomi_tccon.pkl')):
+                with open(os.path.join(config["StorageDir"], "processed", f'{tccon_station_name}_tropomi_tccon.pkl'), "rb") as handle:
                     dict_delta_tropomi_tccon[tccon_station_name] = pickle.load(handle)
-                os.remove(os.path.join(config["StorageDir"], "processed", f'tropomi_tccon_{tccon_station_name}.pkl'))
+                os.remove(os.path.join(config["StorageDir"], "processed", f'{tccon_station_name}_tropomi_tccon.pkl'))
 
         # Save the merged file
         with open(os.path.join(config['StorageDir'], 'processed', 'delta_tropomi_tccon.pkl'), "wb") as f:
