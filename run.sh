@@ -75,7 +75,7 @@ fi
 #############################################################################
 # Module Number: 2
 # Module Name: Download_TROPOMI
-# Description: download TROPOMI data for 2018-2021 from the SRON ftp
+# Description: download TROPOMI data for 2018-2021 from copernicus
 # Files Used: 
 #############################################################################
 
