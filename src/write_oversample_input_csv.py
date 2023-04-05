@@ -8,8 +8,6 @@ from shapely.geometry import Polygon
 import multiprocessing
 import glob
 
-from utilities import get_blended_df
-
 # Config file with settings
 with open("config.yml", "r") as f:
     config = yaml.safe_load(f)
