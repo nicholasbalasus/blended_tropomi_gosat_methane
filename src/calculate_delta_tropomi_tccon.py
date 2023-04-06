@@ -156,9 +156,9 @@ if __name__ == "__main__":
     # This will only be true for the last SLURM_ARRAY_TASK_ID to finish
     # When this is true, merge all of the written {tccon_station_name}_tropomi_tccon.pkl files together
     all_done = False
-    if (len(glob.glob(os.path.join(config["RunDir"], "slurm-" + os.environ.get('SLURM_JOB_ID') + "_*.out"))) == SLURM_ARRAY_TASK_COUNT):
+    if (len(glob.glob(os.path.join(config["RunDir"], "slurm-" + os.environ.get('SLURM_ARRAY_JOB_ID') + "_*.out"))) == SLURM_ARRAY_TASK_COUNT):
         all_done = True
-        for file in glob.glob(os.path.join(config["RunDir"], "slurm-" + os.environ.get('SLURM_JOB_ID') + "_*.out")):
+        for file in glob.glob(os.path.join(config["RunDir"], "slurm-" + os.environ.get('SLURM_ARRAY_JOB_ID') + "_*.out")):
             with open(file, 'r') as f:
                 file_contents = f.read()
             if "Finished" not in file_contents:
