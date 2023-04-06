@@ -10,13 +10,13 @@ Model: lgbm
 a: 1.18
 b: -0.40
 
-Make_Conda_Env: false
-Download_GOSAT: false
-Download_TROPOMI: false
-Download_TCCON: false
-Calculate_Delta_GOSAT_TCCON: false
-Calculate_Delta_TROPOMI_GOSAT: false
-Run_FLAML_SHAP: false
-Write_Blended_Files: false
-Calculate_Delta_TROPOMI_TCCON: false
+Make_Conda_Env: true
+Download_GOSAT: true
+Download_TROPOMI: true
+Download_TCCON: true
+Calculate_Delta_GOSAT_TCCON: true
+Calculate_Delta_TROPOMI_GOSAT: true
+Run_FLAML_SHAP: true
+Write_Blended_Files: true
+Calculate_Delta_TROPOMI_TCCON: true
 Oversample_TROPOMI: true
