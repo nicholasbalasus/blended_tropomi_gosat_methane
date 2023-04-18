@@ -41,10 +41,10 @@ def csv_oversample(filename,start_dt,end_dt,extent,filter_bool):
             for i in range(len(valid_idx)):
                 valid_idx[i] &= (np.max(lonc[i]) - np.min(lonc[i])) < 180
             
-            # Remove coastal pixels if necessary (landflag == 3 AND landflag == 2 with SWIR chi2 > 20)
+            # Remove coastal pixels if necessary (landflag == 3 AND landflag == 2 with SWIR chi2 > 20000)
             if filter_bool:
                 tropomi_surface_classification = (ds["surface_classification"][:] & 0x03).astype(int)
-                valid_idx &= ~((tropomi_surface_classification == 3) | ((tropomi_surface_classification == 2) & (ds["chi_square_SWIR"][:] > 20)))
+                valid_idx &= ~((tropomi_surface_classification == 3) | ((tropomi_surface_classification == 2) & (ds["chi_square_SWIR"][:] > 20000)))
             
             # As we loop through each file, append the satellite retrievals that intersect with the oversampling region
             for var in ["methane_mixing_ratio_bias_corrected","methane_mixing_ratio_blended","methane_mixing_ratio_precision",
