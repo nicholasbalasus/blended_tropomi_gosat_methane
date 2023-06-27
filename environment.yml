@@ -1,4 +1,4 @@
-name: ch4_env
+name: blnd_env
 channels:
   - conda-forge
   - defaults
@@ -20,3 +20,4 @@ dependencies:
   - geopandas=0.12.2
   - flaml=1.1.3
   - pyyaml=6.0
+  - scikit-learn=1.2.0
